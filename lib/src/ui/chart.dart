@@ -4,6 +4,8 @@ import 'package:syncfusion_flutter_charts/charts.dart';
 import '../histogram_parser.dart';
 import 'helper_widgets.dart';
 
+final cartesianChartKey = GlobalKey<SfCartesianChartState>();
+
 Widget chartWidget(
     BuildContext context, Histogram? histogram, Object? errorLoading) {
   Widget mainWidget;
@@ -41,6 +43,7 @@ const chartColors = <Color>[
 Widget _histogramWidget(Histogram histogram) {
   var colorIndex = 0;
   return SfCartesianChart(
+    key: cartesianChartKey,
       palette: chartColors,
       legend: Legend(isVisible: true, position: LegendPosition.bottom),
       title: ChartTitle(text: histogram.title),

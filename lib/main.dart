@@ -86,9 +86,15 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final loading = _loadState != LoadState.none;
+    final theme = Theme.of(context);
+    final buttonColor = loading
+        ? theme.disabledColor
+        : theme.floatingActionButtonTheme.foregroundColor;
+
     return Scaffold(
       appBar: AppBar(
-        foregroundColor: Theme.of(context).colorScheme.primary,
+        foregroundColor: theme.colorScheme.primary,
         title: Text(widget.title),
       ),
       drawer: drawer(
@@ -106,11 +112,27 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.miniEndTop,
-      floatingActionButton: FloatingActionButton(
-        onPressed: _pickFile,
-        mini: true,
-        tooltip: 'Pick a file',
-        child: const Icon(Icons.file_open),
+      floatingActionButton: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FloatingActionButton(
+            onPressed: null,
+            mini: true,
+            backgroundColor: buttonColor,
+            tooltip: 'Export image',
+            child: const Icon(Icons.image_outlined),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 10.0),
+            child: FloatingActionButton(
+              onPressed: loading ? null : _pickFile,
+              mini: true,
+              backgroundColor: buttonColor,
+              tooltip: 'Pick a file',
+              child: const Icon(Icons.file_open),
+            ),
+          ),
+        ],
       ),
     );
   }
