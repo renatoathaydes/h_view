@@ -17,12 +17,38 @@ class HistogramParseException {
   }
 }
 
-class Histogram {
-  final String name;
+class _HistogramSeries {
+  String title = '';
+  final List<HistogramData> data = [];
+  final _HistogramStatistics stats = _HistogramStatistics();
+
+  HistogramSeries copyAndReset() {
+    final series = HistogramSeries(
+        title, List.from(data, growable: false), stats.freeze());
+    reset();
+    return series;
+  }
+
+  void reset() {
+    title = '';
+    data.clear();
+    stats.reset();
+  }
+}
+
+class HistogramSeries {
+  final String title;
   final List<HistogramData> data;
   final HistogramStatistics stats;
 
-  const Histogram(this.name, this.data, this.stats);
+  const HistogramSeries(this.title, this.data, this.stats);
+}
+
+class Histogram {
+  final String title;
+  final List<HistogramSeries> series;
+
+  const Histogram(this.title, this.series);
 }
 
 class HistogramData {
@@ -79,6 +105,15 @@ class _HistogramStatistics {
         buckets: buckets,
         subBuckets: subBuckets,
       );
+
+  void reset() {
+    mean = 0;
+    max = 0;
+    stdDev = 0;
+    totalCount = 0;
+    buckets = 0;
+    subBuckets = 0;
+  }
 }
 
 class HistogramStatistics {
@@ -145,31 +180,63 @@ class HistogramConverter extends Converter<String, HistogramData> {
   }
 }
 
+enum _ParsingStep { waitingForTitleOrHeader, waitingForHeader, data, stats }
+
 Future<Histogram> parseHistogramData(File file, String name) async {
   final dataStream = file
       .openRead()
       .map(utf8.decode)
       .transform(const LineSplitter())
-      .map((line) => line.trim())
-      .skipWhile((line) => line.trim() != _columnsHeader)
-      .skip(1)
-      .where((line) => line.isNotEmpty);
+      .map((line) => line.trim());
 
-  final data = <HistogramData>[];
-  final stats = _HistogramStatistics();
-  var parsingData = true;
+  final allSeries = <HistogramSeries>[];
+  final series = _HistogramSeries();
+  var parsingStep = _ParsingStep.waitingForTitleOrHeader;
 
   await for (final line in dataStream) {
-    if (parsingData && !line.startsWith('#')) {
-      data.add(const HistogramConverter().convert(line));
-      continue;
-    } else if (parsingData) {
-      parsingData = false;
+    if (line.isEmpty && parsingStep != _ParsingStep.stats) continue;
+    switch (parsingStep) {
+      case _ParsingStep.waitingForTitleOrHeader:
+        if (line == _columnsHeader) {
+          parsingStep = _ParsingStep.data;
+        } else {
+          series.title = line;
+          parsingStep = _ParsingStep.waitingForHeader;
+        }
+        break;
+      case _ParsingStep.waitingForHeader:
+        if (line == _columnsHeader) {
+          parsingStep = _ParsingStep.data;
+        } else {
+          throw HistogramParseException(
+              'Expected series columns header, but got "$line"');
+        }
+        break;
+      case _ParsingStep.data:
+        if (line.startsWith('#')) {
+          parsingStep = _ParsingStep.stats;
+          _parseStats(line, series.stats);
+        } else {
+          series.data.add(const HistogramConverter().convert(line));
+        }
+        break;
+      case _ParsingStep.stats:
+        if (line.startsWith('#')) {
+          _parseStats(line, series.stats);
+        }
+        if (line.isEmpty) {
+          parsingStep = _ParsingStep.waitingForTitleOrHeader;
+          allSeries.add(series.copyAndReset());
+        }
+        break;
     }
-    _parseStats(line, stats);
   }
 
-  return Histogram(name, data, stats.freeze());
+  if (series.data.isNotEmpty) {
+    allSeries.add(series.copyAndReset());
+  }
+
+  return Histogram(name, allSeries);
 }
 
 void _parseStats(String line, _HistogramStatistics stats) {

@@ -3,14 +3,15 @@ import 'package:h_view/src/data.dart';
 
 final _formKey = GlobalKey<FormState>();
 
-Widget pad(Widget child){
+Widget pad(Widget child) {
   return Padding(
     padding: const EdgeInsets.all(8.0),
     child: child,
   );
 }
 
-Widget selectedFile(BuildContext context, String? currentFile, LoadState loadState) {
+Widget selectedFile(
+    BuildContext context, String? currentFile, LoadState loadState) {
   return Text(
     loadState == LoadState.pickingFile
         ? 'Waiting...'

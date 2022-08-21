@@ -1,3 +1,1 @@
-enum LoadState{
-  none, pickingFile, parsingChart
-}
+enum LoadState { none, pickingFile, parsingChart }

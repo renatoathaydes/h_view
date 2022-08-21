@@ -25,18 +25,27 @@ Widget chartWidget(
 Widget _histogramWidget(Histogram histogram) {
   return SfCartesianChart(
       // key: ValueKey(histogram),
-      title: ChartTitle(text: histogram.name),
-      primaryXAxis: NumericAxis(
-          title: AxisTitle(text: 'Percentile')),
+      legend: Legend(isVisible: true, position: LegendPosition.bottom),
+      title: ChartTitle(text: histogram.title),
+      primaryXAxis:
+          CategoryAxis(title: AxisTitle(text: 'Percentile (non linear)')),
       primaryYAxis: NumericAxis(
         title: AxisTitle(text: 'Time (ms)'),
       ),
-      series: <ChartSeries>[
-        // Renders line chart
-        LineSeries<HistogramData, double>(
-          dataSource: histogram.data,
-          xValueMapper: (data, _) => data.percentile,
-          yValueMapper: (data, _) => data.value,
-        )
-      ]);
+      series: histogram.series
+          .map(
+            (series) => LineSeries<HistogramData, String>(
+              name: series.title,
+              dataSource: series.data,
+              xValueMapper: (data, _) => data.percentile.toString(),
+              yValueMapper: (data, _) => data.value,
+            ),
+          )
+          .followedBy(histogram.series.map((series) => LineSeries(
+                name: '${series.title} (mean)',
+                dataSource: series.data,
+                xValueMapper: (data, _) => data.percentile.toString(),
+                yValueMapper: (data, _) => series.stats.mean,
+              )))
+          .toList(growable: false));
 }
