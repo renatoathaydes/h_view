@@ -96,8 +96,10 @@ class _MyHomePageState extends State<MyHomePage> {
           ],
         ),
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.miniEndTop,
       floatingActionButton: FloatingActionButton(
         onPressed: _picker,
+        mini: true,
         tooltip: 'Pick a file',
         child: const Icon(Icons.file_open),
       ),
