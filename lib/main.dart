@@ -1,9 +1,11 @@
 import 'package:file/local.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:h_view/src/histogram_parser.dart';
+
 import 'src/data.dart';
+import 'src/histogram_parser.dart';
 import 'src/ui/chart.dart';
+import 'src/ui/drawer.dart';
 import 'src/ui/helper_widgets.dart' as w;
 
 void main() {
@@ -43,7 +45,10 @@ class _MyHomePageState extends State<MyHomePage> {
   Histogram? _histogram;
 
   void _setChartName(String? name) {
-    setState(() => _chartName = name);
+    setState(() {
+      _chartName = name;
+      _histogram = _histogram?.copy(title: name);
+    });
   }
 
   void _picker() async {
@@ -80,12 +85,13 @@ class _MyHomePageState extends State<MyHomePage> {
         foregroundColor: Theme.of(context).colorScheme.primary,
         title: Text(widget.title),
       ),
+      drawer: drawer(
+          context, () => w.pad(w.selectFileForm(_chartName, _setChartName))),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           children: <Widget>[
-            w.pad(w.selectFileForm(_chartName, _setChartName)),
-            w.selectedFile(context, _currentFile, _loadState),
+            w.pad(w.selectedFile(context, _currentFile, _loadState)),
             Expanded(child: chartWidget(context, _histogram, _errorLoading)),
           ],
         ),

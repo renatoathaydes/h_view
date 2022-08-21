@@ -49,6 +49,10 @@ class Histogram {
   final List<HistogramSeries> series;
 
   const Histogram(this.title, this.series);
+
+  Histogram copy({String? title, List<HistogramSeries>? series}) {
+    return Histogram(title ?? this.title, series ?? this.series);
+  }
 }
 
 class HistogramData {
