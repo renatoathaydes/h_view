@@ -2,17 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 
 import '../histogram_parser.dart';
+import 'helper_widgets.dart';
 
 Widget chartWidget(
-    BuildContext context, Histogram? histogram, String? errorLoading) {
+    BuildContext context, Histogram? histogram, Object? errorLoading) {
   Widget mainWidget;
-  if (histogram != null) {
+  if (errorLoading != null) {
+    mainWidget = pad(Container(
+      constraints: const BoxConstraints.tightFor(width: 500.0, height: 200.0),
+      color: Colors.red,
+      child: Center(
+        child: pad(Text(
+          _errorMessage(errorLoading),
+          style: Theme.of(context).textTheme.bodyLarge,
+        )),
+      ),
+    ));
+  } else if (histogram != null) {
     mainWidget = _histogramWidget(histogram);
-  } else if (errorLoading != null) {
-    mainWidget = Text(
-      errorLoading,
-      style: Theme.of(context).textTheme.button,
-    );
   } else {
     mainWidget = Text(
       'No chart generated yet...',
@@ -48,4 +55,11 @@ Widget _histogramWidget(Histogram histogram) {
                 yValueMapper: (data, _) => series.stats.mean,
               )))
           .toList(growable: false));
+}
+
+String _errorMessage(Object error) {
+  if (error is HistogramParseException) {
+    return 'Error parsing histogram data:\n${error.message}';
+  }
+  return 'Unexpected error:\n$error';
 }

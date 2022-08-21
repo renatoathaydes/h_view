@@ -42,7 +42,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   String? _currentFile;
   String? _chartName;
-  String? _errorLoading;
+  Object? _errorLoading;
   LoadState _loadState = LoadState.none;
   Histogram? _histogram;
 
@@ -53,7 +53,7 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  void _picker() async {
+  void _pickFile() async {
     setState(() => _loadState = LoadState.pickingFile);
     FilePickerResult? result = await FilePicker.platform
         .pickFiles(dialogTitle: 'Select histogram file');
@@ -62,6 +62,7 @@ class _MyHomePageState extends State<MyHomePage> {
       setState(() => _loadState = LoadState.none);
     } else {
       setState(() => _loadState = LoadState.parsingChart);
+
       try {
         final histogram = await parseHistogramData(
             await readableFile(file), _chartName ?? 'Histogram');
@@ -69,12 +70,15 @@ class _MyHomePageState extends State<MyHomePage> {
           _histogram = histogram;
           _currentFile = file.name;
           _loadState = LoadState.none;
+          _errorLoading =
+              histogram.series.isEmpty ? 'No data was found!' : null;
         });
-      } on HistogramParseException catch (e) {
+      } catch (e) {
         setState(() {
           _histogram = null;
           _currentFile = null;
-          _errorLoading = e.message;
+          _loadState = LoadState.none;
+          _errorLoading = e;
         });
       }
     }
@@ -94,13 +98,16 @@ class _MyHomePageState extends State<MyHomePage> {
           mainAxisAlignment: MainAxisAlignment.start,
           children: <Widget>[
             w.pad(w.selectedFile(context, _currentFile, _loadState)),
-            Expanded(child: chartWidget(context, _histogram, _errorLoading)),
+            Expanded(
+                child: _loadState == LoadState.parsingChart
+                    ? w.loadingDialog()
+                    : chartWidget(context, _histogram, _errorLoading)),
           ],
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.miniEndTop,
       floatingActionButton: FloatingActionButton(
-        onPressed: _picker,
+        onPressed: _pickFile,
         mini: true,
         tooltip: 'Pick a file',
         child: const Icon(Icons.file_open),

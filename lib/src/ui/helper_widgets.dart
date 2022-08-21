@@ -48,3 +48,18 @@ Widget noChartGeneratedYet(BuildContext context) {
           child: Text('No chart generated yet...',
               style: Theme.of(context).textTheme.headline5)));
 }
+
+Widget loadingDialog() {
+  return SimpleDialog(
+    children: [
+      Center(
+          child: Column(children: const <Widget>[
+            Text('Loading chart'),
+            Padding(
+              padding: EdgeInsets.all(8.0),
+              child: CircularProgressIndicator(),
+            ),
+          ])),
+    ],
+  );
+}
