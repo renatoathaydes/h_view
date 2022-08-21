@@ -9,7 +9,11 @@ Widget drawer(BuildContext context, Widget Function() buildItem) {
           decoration: BoxDecoration(
             color: Theme.of(context).primaryColor,
           ),
-          child: const Text('Settings'),
+          child: Row(children: const <Widget>[
+            Icon(Icons.settings),
+            Padding(
+                padding: EdgeInsets.only(left: 10.0), child: Text('Settings')),
+          ]),
         ),
         ListTile(
           title: buildItem(),
