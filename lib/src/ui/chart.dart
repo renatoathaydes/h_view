@@ -29,9 +29,19 @@ Widget chartWidget(
   return Center(child: mainWidget);
 }
 
+const chartColors = <Color>[
+  Colors.purpleAccent,
+  Colors.greenAccent,
+  Colors.amberAccent,
+  Colors.cyanAccent,
+  Colors.blueAccent,
+  Colors.white,
+];
+
 Widget _histogramWidget(Histogram histogram) {
+  var colorIndex = 0;
   return SfCartesianChart(
-      // key: ValueKey(histogram),
+      palette: chartColors,
       legend: Legend(isVisible: true, position: LegendPosition.bottom),
       title: ChartTitle(text: histogram.title),
       primaryXAxis:
@@ -50,6 +60,8 @@ Widget _histogramWidget(Histogram histogram) {
           )
           .followedBy(histogram.series.map((series) => LineSeries(
                 name: '${series.title} (mean)',
+                color: chartColors[colorIndex++ % chartColors.length],
+                opacity: 0.6,
                 dataSource: series.data,
                 xValueMapper: (data, _) => data.percentile.toString(),
                 yValueMapper: (data, _) => series.stats.mean,
