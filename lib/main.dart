@@ -1,8 +1,10 @@
-import 'package:file/local.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
 import 'src/data.dart';
+import 'src/files/reader.dart'
+    if (dart.library.js) 'src/files/web_reader.dart'
+    if (dart.library.io) 'src/files/io_reader.dart';
 import 'src/histogram_parser.dart';
 import 'src/ui/chart.dart';
 import 'src/ui/drawer.dart';
@@ -55,17 +57,17 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() => _loadState = LoadState.pickingFile);
     FilePickerResult? result = await FilePicker.platform
         .pickFiles(dialogTitle: 'Select histogram file');
-    final path = result?.files.first.path;
-    if (path == null) {
+    final file = result?.files.first;
+    if (file == null) {
       setState(() => _loadState = LoadState.none);
     } else {
       setState(() => _loadState = LoadState.parsingChart);
       try {
         final histogram = await parseHistogramData(
-            const LocalFileSystem().file(path), _chartName ?? 'Histogram');
+            await readableFile(file), _chartName ?? 'Histogram');
         setState(() {
           _histogram = histogram;
-          _currentFile = path;
+          _currentFile = file.name;
           _loadState = LoadState.none;
         });
       } on HistogramParseException catch (e) {
