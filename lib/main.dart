@@ -1,8 +1,12 @@
+import 'dart:async';
+import 'dart:typed_data';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:h_view/src/ui/buttons.dart';
 
 import 'src/data.dart';
+import 'src/export.dart';
 import 'src/files/reader.dart'
     if (dart.library.js) 'src/files/web_reader.dart'
     if (dart.library.io) 'src/files/io_reader.dart';
@@ -43,6 +47,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   String? _currentFile;
   String? _chartName;
+  String? _dirToExport;
   Object? _errorLoading;
   LoadState _loadState = LoadState.none;
   Histogram? _histogram;
@@ -52,6 +57,48 @@ class _MyHomePageState extends State<MyHomePage> {
       _chartName = name;
       _histogram = _histogram?.copy(title: name);
     });
+  }
+
+  void _setDirToExport(String? name) {
+    setState(() => _dirToExport = name);
+  }
+
+  void _exportImage(BuildContext context) async {
+    final showMessage = w.snackBarShower(context);
+    Future<Uint8List?> getImage() => exportChartAsImage(context);
+    final chartFile = _currentFile;
+    if (chartFile == null) {
+      return showMessage('No chart has been generated yet!');
+    }
+    FutureOr<String> getSavedFile(String? dir, Uint8List image) {
+      return const FilesImpl().saveFile(context, dir, chartFile, image);
+    }
+
+    setState(() => _loadState = LoadState.pickingFile);
+    final String? dir;
+    try {
+      if (const FilesImpl().supportsGetDirectoryPath && _dirToExport == null) {
+        dir = await FilePicker.platform
+            .getDirectoryPath(dialogTitle: 'Select a directory');
+        if (dir == null) {
+          return showMessage('No directory selected.');
+        }
+      } else {
+        dir = _dirToExport;
+      }
+      final image = await getImage();
+      if (image == null) {
+        return showMessage('An error occurred trying to export the image!');
+      }
+      try {
+        final savedFile = await getSavedFile(dir, image);
+        showMessage('Successfully saved $savedFile.');
+      } catch (e) {
+        showMessage('Could not save the image: $e');
+      }
+    } finally {
+      setState(() => _loadState = LoadState.none);
+    }
   }
 
   void _pickFile() async {
@@ -66,7 +113,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
       try {
         final histogram = await parseHistogramData(
-            await readableFile(file), _chartName ?? 'Histogram');
+            await const FilesImpl().readableFile(file),
+            _chartName ?? 'Histogram');
         setState(() {
           _histogram = histogram;
           _currentFile = file.name;
@@ -98,8 +146,10 @@ class _MyHomePageState extends State<MyHomePage> {
         foregroundColor: theme.colorScheme.primary,
         title: Text(widget.title),
       ),
-      drawer: drawer(
-          context, () => w.pad(w.selectFileForm(_chartName, _setChartName))),
+      drawer: drawer(context, [
+        () => w.pad(w.selectFileForm(_chartName, _setChartName)),
+        () => w.pad(w.selectDirectoryToExport(_dirToExport, _setDirToExport)),
+      ]),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
@@ -115,7 +165,8 @@ class _MyHomePageState extends State<MyHomePage> {
       floatingActionButtonLocation: FloatingActionButtonLocation.miniEndTop,
       floatingActionButton: menuButtons(
         [
-          button('Export image', const Icon(Icons.image_outlined), null,
+          button('Export image', const Icon(Icons.image_outlined),
+              _histogram == null ? null : () => _exportImage(context),
               backgroundColor: buttonColor),
           button('Pick a file', const Icon(Icons.file_open),
               loading ? null : _pickFile,

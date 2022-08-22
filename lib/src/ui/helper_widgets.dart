@@ -42,6 +42,29 @@ Form selectFileForm(String? chartName, Function(String?) setChartName) {
       ));
 }
 
+Form selectDirectoryToExport(
+    String? dirToExport, Function(String?) setDirToExport) {
+  return Form(
+      // key: _formKey,
+      child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const Padding(
+        padding: EdgeInsets.all(8.0),
+        child: Text('Directory to export images to:'),
+      ),
+      TextFormField(
+        initialValue: dirToExport,
+        onChanged: setDirToExport,
+        decoration: const InputDecoration(
+          border: OutlineInputBorder(),
+          hintText: 'Pick a directory!',
+        ),
+      )
+    ],
+  ));
+}
+
 Widget noChartGeneratedYet(BuildContext context) {
   return Expanded(
       child: Align(
@@ -49,17 +72,51 @@ Widget noChartGeneratedYet(BuildContext context) {
               style: Theme.of(context).textTheme.headline5)));
 }
 
+void Function(String message) snackBarShower(BuildContext context) {
+  final textStyle = Theme.of(context).textTheme.bodyLarge;
+  return (msg) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      backgroundColor: Theme.of(context).backgroundColor,
+      content: ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 20),
+          child: Center(child: Text(msg, style: textStyle)))));
+}
+
 Widget loadingDialog() {
   return SimpleDialog(
     children: [
       Center(
           child: Column(children: const <Widget>[
-            Text('Loading chart'),
-            Padding(
-              padding: EdgeInsets.all(8.0),
-              child: CircularProgressIndicator(),
-            ),
-          ])),
+        Text('Loading chart'),
+        Padding(
+          padding: EdgeInsets.all(8.0),
+          child: CircularProgressIndicator(),
+        ),
+      ])),
     ],
   );
+}
+
+Future<bool?> showYesNoDialog(
+  BuildContext context, {
+  required Widget question,
+  Widget title = const Text(''),
+  Widget yesLabel = const Text('Yes'),
+  Widget noLabel = const Text('No'),
+}) {
+  // set up the buttons
+  final alert = AlertDialog(
+    title: title,
+    content: question,
+    actions: [
+      TextButton(
+        child: noLabel,
+        onPressed: () => Navigator.pop(context, false),
+      ),
+      TextButton(
+        child: yesLabel,
+        onPressed: () => Navigator.pop(context, true),
+      )
+    ],
+  );
+  return showDialog<bool>(context: context, builder: (context) => alert);
 }
