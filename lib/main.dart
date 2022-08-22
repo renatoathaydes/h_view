@@ -1,5 +1,6 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:h_view/src/ui/buttons.dart';
 
 import 'src/data.dart';
 import 'src/files/reader.dart'
@@ -112,26 +113,13 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.miniEndTop,
-      floatingActionButton: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          FloatingActionButton(
-            onPressed: null,
-            mini: true,
-            backgroundColor: buttonColor,
-            tooltip: 'Export image',
-            child: const Icon(Icons.image_outlined),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(left: 10.0),
-            child: FloatingActionButton(
-              onPressed: loading ? null : _pickFile,
-              mini: true,
-              backgroundColor: buttonColor,
-              tooltip: 'Pick a file',
-              child: const Icon(Icons.file_open),
-            ),
-          ),
+      floatingActionButton: menuButtons(
+        [
+          button('Export image', const Icon(Icons.image_outlined), null,
+              backgroundColor: buttonColor),
+          button('Pick a file', const Icon(Icons.file_open),
+              loading ? null : _pickFile,
+              backgroundColor: buttonColor),
         ],
       ),
     );
