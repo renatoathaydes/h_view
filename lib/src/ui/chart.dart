@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:syncfusion_flutter_charts/charts.dart';
+import 'package:syncfusion_flutter_charts/charts.dart' hide HistogramSeries;
 
 import '../data.dart';
 import '../histogram_parser.dart';
@@ -41,11 +41,24 @@ const chartColors = <Color>[
   Colors.white,
 ];
 
+class _IndexedSeries {
+  final int index;
+  final HistogramSeries series;
+
+  _IndexedSeries(this.index, this.series);
+
+  String get seriesName =>
+      series.title.isEmpty ? 'Series ${index + 1}' : series.title;
+}
+
 Widget _histogramWidget(Histogram histogram, MaxPercentile9s maxPercentile9s) {
   var colorIndex = 0;
 
-  final data = histogram.series.map((series) =>
-      series.filter((p) => p.percentile < maxPercentile9s.percentile));
+  var index = 0;
+  final data = histogram.series
+      .map((series) => _IndexedSeries(index++,
+          series.filter((p) => p.percentile < maxPercentile9s.percentile)))
+      .toList(growable: false);
 
   return SfCartesianChart(
       key: cartesianChartKey,
@@ -60,19 +73,19 @@ Widget _histogramWidget(Histogram histogram, MaxPercentile9s maxPercentile9s) {
       series: data
           .map(
             (series) => LineSeries<HistogramData, String>(
-              name: series.title,
-              dataSource: series.data,
+              name: series.seriesName,
+              dataSource: series.series.data,
               xValueMapper: (data, _) => data.percentile.toString(),
               yValueMapper: (data, _) => data.value,
             ),
           )
           .followedBy(data.map((series) => LineSeries(
-                name: '${series.title} (mean)',
+        name: '${series.seriesName} (mean)',
                 color: chartColors[colorIndex++ % chartColors.length],
                 opacity: 0.6,
-                dataSource: series.data,
+                dataSource: series.series.data,
                 xValueMapper: (data, _) => data.percentile.toString(),
-                yValueMapper: (data, _) => series.stats.mean,
+                yValueMapper: (data, _) => series.series.stats.mean,
               )))
           .toList(growable: false));
 }
