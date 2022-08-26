@@ -135,9 +135,6 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     final loading = _loadState != LoadState.none;
     final theme = Theme.of(context);
-    final buttonColor = loading
-        ? theme.disabledColor
-        : theme.floatingActionButtonTheme.foregroundColor;
 
     return Scaffold(
       appBar: AppBar(
@@ -165,12 +162,20 @@ class _MyHomePageState extends State<MyHomePage> {
       floatingActionButtonLocation: FloatingActionButtonLocation.miniEndTop,
       floatingActionButton: menuButtons(
         [
-          button('Export image', const Icon(Icons.image_outlined),
-              _histogram == null ? null : () => _exportImage(context),
-              backgroundColor: buttonColor),
+          button(
+              'Export image',
+              const Icon(Icons.image_outlined),
+              _histogram == null || loading
+                  ? null
+                  : () => _exportImage(context),
+              backgroundColor: _histogram == null || loading
+                  ? theme.disabledColor
+                  : theme.floatingActionButtonTheme.foregroundColor),
           button('Pick a file', const Icon(Icons.file_open),
               loading ? null : _pickFile,
-              backgroundColor: buttonColor),
+              backgroundColor: loading
+                  ? theme.disabledColor
+                  : theme.floatingActionButtonTheme.foregroundColor),
         ],
       ),
     );
