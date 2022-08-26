@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 
+import '../data.dart';
 import '../histogram_parser.dart';
 import 'helper_widgets.dart';
 
 final cartesianChartKey = GlobalKey<SfCartesianChartState>();
 
-Widget chartWidget(
-    BuildContext context, Histogram? histogram, Object? errorLoading) {
+Widget chartWidget(BuildContext context, Histogram? histogram,
+    Object? errorLoading, MaxPercentile9s maxPercentile9s) {
   Widget mainWidget;
   if (errorLoading != null) {
     mainWidget = pad(Container(
@@ -21,7 +22,7 @@ Widget chartWidget(
       ),
     ));
   } else if (histogram != null) {
-    mainWidget = _histogramWidget(histogram);
+    mainWidget = _histogramWidget(histogram, maxPercentile9s);
   } else {
     mainWidget = Text(
       'No chart generated yet...',
@@ -40,10 +41,14 @@ const chartColors = <Color>[
   Colors.white,
 ];
 
-Widget _histogramWidget(Histogram histogram) {
+Widget _histogramWidget(Histogram histogram, MaxPercentile9s maxPercentile9s) {
   var colorIndex = 0;
+
+  final data = histogram.series.map((series) =>
+      series.filter((p) => p.percentile < maxPercentile9s.percentile));
+
   return SfCartesianChart(
-    key: cartesianChartKey,
+      key: cartesianChartKey,
       palette: chartColors,
       legend: Legend(isVisible: true, position: LegendPosition.bottom),
       title: ChartTitle(text: histogram.title),
@@ -52,7 +57,7 @@ Widget _histogramWidget(Histogram histogram) {
       primaryYAxis: NumericAxis(
         title: AxisTitle(text: 'Time (ms)'),
       ),
-      series: histogram.series
+      series: data
           .map(
             (series) => LineSeries<HistogramData, String>(
               name: series.title,
@@ -61,7 +66,7 @@ Widget _histogramWidget(Histogram histogram) {
               yValueMapper: (data, _) => data.value,
             ),
           )
-          .followedBy(histogram.series.map((series) => LineSeries(
+          .followedBy(data.map((series) => LineSeries(
                 name: '${series.title} (mean)',
                 color: chartColors[colorIndex++ % chartColors.length],
                 opacity: 0.6,

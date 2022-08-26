@@ -42,8 +42,8 @@ Form selectFileForm(String? chartName, Function(String?) setChartName) {
       ));
 }
 
-Form selectDirectoryToExport(
-    String? dirToExport, Function(String?) setDirToExport) {
+Form maxPercentileSelector(MaxPercentile9s max9sPercentile,
+    Function(MaxPercentile9s) setMax9sPercentile) {
   return Form(
       // key: _formKey,
       child: Column(
@@ -51,15 +51,20 @@ Form selectDirectoryToExport(
     children: [
       const Padding(
         padding: EdgeInsets.all(8.0),
-        child: Text('Directory to export images to:'),
+        child: Text("Max 9's in 99.N% to display:"),
       ),
-      TextFormField(
-        initialValue: dirToExport,
-        onChanged: setDirToExport,
-        decoration: const InputDecoration(
-          border: OutlineInputBorder(),
-          hintText: 'Pick a directory!',
-        ),
+      Column(
+        children: [
+          Slider(
+            value: max9sPercentile.number.toDouble(),
+            min: 0,
+            max: MaxPercentile9s.maxNumber.toDouble(),
+            divisions: MaxPercentile9s.maxNumber + 1,
+            onChanged: (number) =>
+                setMax9sPercentile(MaxPercentile9s.fromNumber(number.toInt())),
+          ),
+          Text('${max9sPercentile.percentile * 100}%'),
+        ],
       )
     ],
   ));

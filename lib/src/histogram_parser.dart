@@ -42,6 +42,11 @@ class HistogramSeries {
   final HistogramStatistics stats;
 
   const HistogramSeries(this.title, this.data, this.stats);
+
+  HistogramSeries filter(bool Function(HistogramData) keep) {
+    return HistogramSeries(
+        title, data.where(keep).toList(growable: false), stats);
+  }
 }
 
 class Histogram {

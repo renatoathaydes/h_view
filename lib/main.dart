@@ -3,7 +3,6 @@ import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:h_view/src/ui/buttons.dart';
 
 import 'src/data.dart';
 import 'src/export.dart';
@@ -11,6 +10,7 @@ import 'src/files/reader.dart'
     if (dart.library.js) 'src/files/web_reader.dart'
     if (dart.library.io) 'src/files/io_reader.dart';
 import 'src/histogram_parser.dart';
+import 'src/ui/buttons.dart';
 import 'src/ui/chart.dart';
 import 'src/ui/drawer.dart';
 import 'src/ui/helper_widgets.dart' as w;
@@ -47,7 +47,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   String? _currentFile;
   String? _chartName;
-  String? _dirToExport;
+  MaxPercentile9s _maxPercentile = MaxPercentile9s.max;
   Object? _errorLoading;
   LoadState _loadState = LoadState.none;
   Histogram? _histogram;
@@ -59,8 +59,8 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  void _setDirToExport(String? name) {
-    setState(() => _dirToExport = name);
+  void _setMaxPercentile9s(MaxPercentile9s value) {
+    setState(() => _maxPercentile = value);
   }
 
   void _exportImage(BuildContext context) async {
@@ -75,16 +75,14 @@ class _MyHomePageState extends State<MyHomePage> {
     }
 
     setState(() => _loadState = LoadState.pickingFile);
-    final String? dir;
+    String? dir;
     try {
-      if (const FilesImpl().supportsGetDirectoryPath && _dirToExport == null) {
+      if (const FilesImpl().supportsGetDirectoryPath) {
         dir = await FilePicker.platform
             .getDirectoryPath(dialogTitle: 'Select a directory');
         if (dir == null) {
           return showMessage('No directory selected.');
         }
-      } else {
-        dir = _dirToExport;
       }
       final image = await getImage();
       if (image == null) {
@@ -148,7 +146,8 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       drawer: drawer(context, [
         () => w.pad(w.selectFileForm(_chartName, _setChartName)),
-        () => w.pad(w.selectDirectoryToExport(_dirToExport, _setDirToExport)),
+        () =>
+            w.pad(w.maxPercentileSelector(_maxPercentile, _setMaxPercentile9s)),
       ]),
       body: Center(
         child: Column(
@@ -158,7 +157,8 @@ class _MyHomePageState extends State<MyHomePage> {
             Expanded(
                 child: _loadState == LoadState.parsingChart
                     ? w.loadingDialog()
-                    : chartWidget(context, _histogram, _errorLoading)),
+                    : chartWidget(
+                        context, _histogram, _errorLoading, _maxPercentile)),
           ],
         ),
       ),
