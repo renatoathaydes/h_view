@@ -63,7 +63,7 @@ Form maxPercentileSelector(MaxPercentile9s max9sPercentile,
             onChanged: (number) =>
                 setMax9sPercentile(MaxPercentile9s.fromNumber(number.toInt())),
           ),
-          Text('${max9sPercentile.percentile * 100}%'),
+          Text(max9sPercentile.percentText),
         ],
       )
     ],
