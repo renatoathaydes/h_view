@@ -55,11 +55,11 @@ You may use a command as shown below to produce an appropriate file:
 
 ```shell
 # Run Go Server (or whatever you're measuring) in another shell
-echo "# Go HTTP\n" >> dart_vs_go.txt && \\
+echo "# Go HTTP\n" >> dart_vs_go.txt && \
 wrk2 -t8 -c100 -d30s -R200 --latency "http://[::1]:8080/" >> dart_vs_go.txt
 
 # Run Dart Server (or whatever else you're measuring) in another shell
-echo "# Dart HttpServer\n" >> dart_vs_go.txt && \\
+echo "# Dart HttpServer\n" >> dart_vs_go.txt && \
 wrk2 -t8 -c100 -d30s -R200 --latency "http://[::1]:8080/" >> dart_vs_go.txt
 ```
 
