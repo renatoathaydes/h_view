@@ -27,7 +27,7 @@ Select the histogram file. If all goes well, you should see a chart like this:
 
 Click on the top-left corner burger icon to open the settings drawer:
 
-<img src="docs/settings.png" alt="Settings screen" style="max-width: 20em;">
+![Settings screen](docs/settings.png)
 
 To export a PNG image with the chart, click on the button to the left of the file picker button:
 
