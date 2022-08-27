@@ -30,7 +30,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: const ColorScheme.dark(),
       ),
-      home: const MyHomePage(title: 'HView'),
+      home: const MyHomePage(title: 'View'),
     );
   }
 }
@@ -144,7 +144,17 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       appBar: AppBar(
         foregroundColor: theme.colorScheme.primary,
-        title: Text(widget.title),
+        backgroundColor: Colors.black,
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Image(
+              image: AssetImage('web/icons/android-chrome-192x192.png'),
+              width: 50.0,
+            ),
+            Text(widget.title),
+          ],
+        ),
       ),
       drawer: drawer(context, [
         w.form([
