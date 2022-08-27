@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-Widget drawer(BuildContext context, List<Widget Function()> buildItems) {
+Widget drawer(BuildContext context, List<Widget> widgets) {
   return Drawer(
     child: ListView(
       padding: EdgeInsets.zero,
@@ -15,8 +15,8 @@ Widget drawer(BuildContext context, List<Widget Function()> buildItems) {
                 padding: EdgeInsets.only(left: 10.0), child: Text('Settings')),
           ]),
         ),
-        ...buildItems.map((build) => ListTile(
-              title: build(),
+        ...widgets.map((w) => ListTile(
+              title: w,
               onTap: () => Navigator.pop(context),
             )),
         ListTile(

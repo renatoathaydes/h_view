@@ -20,54 +20,90 @@ Widget selectedFile(
   );
 }
 
-Form selectFileForm(String? chartName, Function(String?) setChartName) {
+Form form(List<Widget> widgets) {
   return Form(
       key: _formKey,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Text('Chart name:'),
-          ),
-          TextFormField(
-            initialValue: chartName,
-            onChanged: setChartName,
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
-              hintText: 'Give the chart a name!',
-            ),
-          )
-        ],
+        children: widgets,
       ));
 }
 
-Form maxPercentileSelector(MaxPercentile9s max9sPercentile,
-    Function(MaxPercentile9s) setMax9sPercentile) {
-  return Form(
-      // key: _formKey,
-      child: Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      const Padding(
-        padding: EdgeInsets.all(8.0),
-        child: Text("Max 9's in 99.N% to display:"),
+List<Widget> chartNameSelector(
+    String? chartName, Function(String?) setChartName) {
+  return [
+    const Padding(
+      padding: EdgeInsets.all(8.0),
+      child: Text('Chart name:'),
+    ),
+    TextFormField(
+      initialValue: chartName,
+      onChanged: setChartName,
+      decoration: const InputDecoration(
+        border: OutlineInputBorder(),
+        hintText: 'Give the chart a name!',
       ),
-      Column(
-        children: [
-          Slider(
-            value: max9sPercentile.number.toDouble(),
-            min: 0,
-            max: MaxPercentile9s.maxNumber.toDouble(),
-            divisions: MaxPercentile9s.maxNumber + 1,
-            onChanged: (number) =>
-                setMax9sPercentile(MaxPercentile9s.fromNumber(number.toInt())),
-          ),
-          Text(max9sPercentile.percentText),
-        ],
-      )
-    ],
-  ));
+    ),
+  ];
+}
+
+List<Widget> percentileLineSelector(
+    double? percentileLine, Function(double?) setPercentileLine) {
+  return [
+    const Padding(
+      padding: EdgeInsets.all(8.0),
+      child: Text('Percentile line:'),
+    ),
+    SizedBox(
+      height: 85,
+      child: TextFormField(
+        initialValue: percentileLine?.toString() ?? '',
+        validator: (value) {
+          if (value == null || value.trim().isEmpty) return null;
+          final number = double.tryParse(value);
+          if (number == null || number < 0.0 || number > 1.0) {
+            return 'Value must be between 0.0 and 1.0';
+          }
+          return null;
+        },
+        onChanged: (value) {
+          if (!_formKey.currentState!.validate()) return;
+          if (value.trim().isEmpty) {
+            setPercentileLine(null);
+          } else {
+            setPercentileLine(double.parse(value.trim()));
+          }
+        },
+        decoration: const InputDecoration(
+          border: OutlineInputBorder(),
+          hintText: 'Value between 0.0 to 1.0, or empty',
+        ),
+      ),
+    ),
+  ];
+}
+
+List<Widget> maxPercentileSelector(MaxPercentile9s max9sPercentile,
+    Function(MaxPercentile9s) setMax9sPercentile) {
+  return [
+    const Padding(
+      padding: EdgeInsets.all(8.0),
+      child: Text("Max 9's in 99.N%:"),
+    ),
+    Column(
+      children: [
+        Slider(
+          value: max9sPercentile.number.toDouble(),
+          min: 0,
+          max: MaxPercentile9s.maxNumber.toDouble(),
+          divisions: MaxPercentile9s.maxNumber + 1,
+          onChanged: (number) =>
+              setMax9sPercentile(MaxPercentile9s.fromNumber(number.toInt())),
+        ),
+        Text(max9sPercentile.percentText),
+      ],
+    ),
+  ];
 }
 
 Widget noChartGeneratedYet(BuildContext context) {

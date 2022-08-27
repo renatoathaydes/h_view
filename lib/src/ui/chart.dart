@@ -7,8 +7,12 @@ import 'helper_widgets.dart';
 
 final cartesianChartKey = GlobalKey<SfCartesianChartState>();
 
-Widget chartWidget(BuildContext context, Histogram? histogram,
-    Object? errorLoading, MaxPercentile9s maxPercentile9s) {
+Widget chartWidget(
+    BuildContext context,
+    Histogram? histogram,
+    Object? errorLoading,
+    MaxPercentile9s maxPercentile9s,
+    double? percentileLine) {
   Widget mainWidget;
   if (errorLoading != null) {
     mainWidget = pad(Container(
@@ -22,7 +26,7 @@ Widget chartWidget(BuildContext context, Histogram? histogram,
       ),
     ));
   } else if (histogram != null) {
-    mainWidget = _histogramWidget(histogram, maxPercentile9s);
+    mainWidget = _histogramWidget(histogram, maxPercentile9s, percentileLine);
   } else {
     mainWidget = Text(
       'No chart generated yet...',
@@ -51,7 +55,8 @@ class _IndexedSeries {
       series.title.isEmpty ? 'Series ${index + 1}' : series.title;
 }
 
-Widget _histogramWidget(Histogram histogram, MaxPercentile9s maxPercentile9s) {
+Widget _histogramWidget(Histogram histogram, MaxPercentile9s maxPercentile9s,
+    double? percentileLine) {
   var colorIndex = 0;
 
   var index = 0;
@@ -79,15 +84,27 @@ Widget _histogramWidget(Histogram histogram, MaxPercentile9s maxPercentile9s) {
               yValueMapper: (data, _) => data.value,
             ),
           )
-          .followedBy(data.map((series) => LineSeries(
-        name: '${series.seriesName} (mean)',
-                color: chartColors[colorIndex++ % chartColors.length],
-                opacity: 0.6,
-                dataSource: series.series.data,
-                xValueMapper: (data, _) => data.percentile.toString(),
-                yValueMapper: (data, _) => series.series.stats.mean,
-              )))
+          .followedBy(percentileLine == null
+              ? const []
+              : data.map((series) => LineSeries(
+                    name: '${series.seriesName} ($percentileLine)',
+                    color: chartColors[colorIndex++ % chartColors.length],
+                    opacity: 0.6,
+                    dataSource: series.series.data,
+                    xValueMapper: (data, _) => data.percentile.toString(),
+                    yValueMapper: (data, _) =>
+                        _percentileValue(series.series, percentileLine),
+                  )))
           .toList(growable: false));
+}
+
+double _percentileValue(HistogramSeries series, double percentileLine) {
+  if (percentileLine == 0.5) return series.stats.mean;
+  final dataPoint = series.data.firstWhere(
+      (d) => d.percentile >= percentileLine,
+      orElse: () =>
+          percentileLine < 0.1 ? series.data.first : series.data.last);
+  return dataPoint.value;
 }
 
 String _errorMessage(Object error) {

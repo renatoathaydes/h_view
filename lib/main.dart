@@ -48,6 +48,7 @@ class _MyHomePageState extends State<MyHomePage> {
   String? _currentFile;
   String? _chartName;
   MaxPercentile9s _maxPercentile = MaxPercentile9s.max;
+  double? _percentileLine = 0.5;
   Object? _errorLoading;
   LoadState _loadState = LoadState.none;
   Histogram? _histogram;
@@ -61,6 +62,10 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _setMaxPercentile9s(MaxPercentile9s value) {
     setState(() => _maxPercentile = value);
+  }
+
+  void _setPercentileLine(double? value) {
+    setState(() => _percentileLine = value);
   }
 
   void _exportImage(BuildContext context) async {
@@ -142,9 +147,13 @@ class _MyHomePageState extends State<MyHomePage> {
         title: Text(widget.title),
       ),
       drawer: drawer(context, [
-        () => w.pad(w.selectFileForm(_chartName, _setChartName)),
-        () =>
-            w.pad(w.maxPercentileSelector(_maxPercentile, _setMaxPercentile9s)),
+        w.form([
+          ...w.chartNameSelector(_chartName, _setChartName),
+          const SizedBox(height: 20),
+          ...w.maxPercentileSelector(_maxPercentile, _setMaxPercentile9s),
+          const SizedBox(height: 20),
+          ...w.percentileLineSelector(_percentileLine, _setPercentileLine),
+        ]),
       ]),
       body: Center(
         child: Column(
@@ -154,8 +163,8 @@ class _MyHomePageState extends State<MyHomePage> {
             Expanded(
                 child: _loadState == LoadState.parsingChart
                     ? w.loadingDialog()
-                    : chartWidget(
-                        context, _histogram, _errorLoading, _maxPercentile)),
+                    : chartWidget(context, _histogram, _errorLoading,
+                        _maxPercentile, _percentileLine)),
           ],
         ),
       ),
