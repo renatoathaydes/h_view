@@ -29,7 +29,17 @@ Click on the top-left corner burger icon to open the settings drawer:
 
 ![Settings screen](docs/settings.png)
 
-To export a PNG image with the chart, click on the button to the left of the file picker button:
+You can change the following settings, as shown above:
+
+* The title of the chart.
+* Maximum number of 9's in `99.n%` percentile to display.
+* Percentile horizontal line (shows the mean, 0.5, by default).
+
+The value for the percentile line can be empty, in which case the horizontal line is hidden.
+Values must be between `0` (shows the minimum) and `1.0` (shows the maximum).
+The value `0.99`, for example, shows the 99th percentile.
+
+To export a PNG image of the chart, click on the button to the left of the file picker button:
 
 ![Export image](docs/export_image.png)
 
