@@ -96,7 +96,7 @@ List<Widget> maxPercentileSelector(MaxPercentile9s max9sPercentile,
           value: max9sPercentile.number.toDouble(),
           min: 0,
           max: MaxPercentile9s.maxNumber.toDouble(),
-          divisions: MaxPercentile9s.maxNumber + 1,
+          divisions: MaxPercentile9s.values.length - 1,
           onChanged: (number) =>
               setMax9sPercentile(MaxPercentile9s.fromNumber(number.toInt())),
         ),
