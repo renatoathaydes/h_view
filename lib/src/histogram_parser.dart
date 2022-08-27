@@ -198,6 +198,17 @@ Future<Histogram> parseHistogramData(File file, String name) async {
       .transform(const LineSplitter())
       .map((line) => line.trim());
 
+  try {
+    return Histogram(name, await _parse(dataStream));
+  } on FormatException catch (e) {
+    final message = e.message.startsWith('Unexpected extension byte')
+        ? 'content is not valid unicode'
+        : e.message;
+    throw HistogramParseException('Input format error: $message');
+  }
+}
+
+Future<List<HistogramSeries>> _parse(Stream<String> dataStream) async {
   final allSeries = <HistogramSeries>[];
   final series = _HistogramSeries();
   var parsingStep = _ParsingStep.waitingForTitleOrHeader;
@@ -209,20 +220,20 @@ Future<Histogram> parseHistogramData(File file, String name) async {
         if (line == _columnsHeader) {
           parsingStep = _ParsingStep.data;
         } else {
-          series.title = line;
-          parsingStep = _ParsingStep.waitingForHeader;
+          final title = _getTitleFromLine(line);
+          if (title != null) {
+            series.title = title;
+            parsingStep = _ParsingStep.waitingForHeader;
+          }
         }
         break;
       case _ParsingStep.waitingForHeader:
         if (line == _columnsHeader) {
           parsingStep = _ParsingStep.data;
-        } else {
-          throw HistogramParseException(
-              'Expected series columns header, but got "$line"');
         }
         break;
       case _ParsingStep.data:
-        if (line.startsWith('#')) {
+        if (line.startsWith('#[')) {
           parsingStep = _ParsingStep.stats;
           _parseStats(line, series.stats);
         } else {
@@ -230,10 +241,9 @@ Future<Histogram> parseHistogramData(File file, String name) async {
         }
         break;
       case _ParsingStep.stats:
-        if (line.startsWith('#')) {
+        if (line.startsWith('#[')) {
           _parseStats(line, series.stats);
-        }
-        if (line.isEmpty) {
+        } else {
           parsingStep = _ParsingStep.waitingForTitleOrHeader;
           allSeries.add(series.copyAndReset());
         }
@@ -245,7 +255,7 @@ Future<Histogram> parseHistogramData(File file, String name) async {
     allSeries.add(series.copyAndReset());
   }
 
-  return Histogram(name, allSeries);
+  return allSeries;
 }
 
 void _parseStats(String line, _HistogramStatistics stats) {
@@ -283,6 +293,13 @@ void _parseStats(String line, _HistogramStatistics stats) {
         throw HistogramParseException('Unexpected statistic value: $key');
     }
   }
+}
+
+String? _getTitleFromLine(String line) {
+  if (line.startsWith("# ")) {
+    return line.substring(2).trim();
+  }
+  return null;
 }
 
 extension _HistogramParserNumberConverter on String {

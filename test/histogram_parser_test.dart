@@ -1,7 +1,9 @@
 import 'package:file/file.dart';
+import 'package:file/local.dart';
 import 'package:file/memory.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:h_view/src/histogram_parser.dart';
+import 'package:path/path.dart' as path;
 
 const histogramExample = '''
        Value   Percentile   TotalCount 1/(1-Percentile)
@@ -23,7 +25,7 @@ const multiSeriesHistogramExample = '''
       64.767     1.000000      3477000          inf
 #[Mean    =        4.881, StdDeviation   =        1.777]
 
-  Foo Bar
+# Foo Bar
        Value   Percentile   TotalCount 1/(1-Percentile)
 
          1.2       0.100000            2         0.00
@@ -31,7 +33,7 @@ const multiSeriesHistogramExample = '''
 #[Max     =         10, Total count    =      100]
 
 
-Another
+# Another
 
        Value   Percentile   TotalCount 1/(1-Percentile)
 
@@ -41,7 +43,26 @@ Another
 #[Mean    =        8, StdDeviation   =        2]
 #[Max     =       23, Total count    =      1000]
 #[Buckets =           4, SubBuckets     =         100]
+----------------------------------------------------------
+  6048 requests in 30.07s, 1.19MB read
+Requests/sec:    201.11
+Transfer/sec:     40.46KB
+# Final Series
 
+Running 30s test @ http://[::1]:8080/
+  8 threads and 100 connections
+  Thread calibration: mean lat.: 2.270ms, rate sampling interval: 10ms
+  Thread calibration: mean lat.: 2.245ms, rate sampling interval: 10ms
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency     1.78ms  618.63us   6.07ms   73.74%
+    Req/Sec    29.35     73.29   333.00     87.02%
+  Latency Distribution (HdrHistogram - Recorded Latency)
+ 50.000%    1.73ms
+ 75.000%    2.10ms
+
+  Detailed Percentile spectrum:
+       Value   Percentile   TotalCount 1/(1-Percentile)
+         4         0.5            1         0.4
 ''';
 
 void main() {
@@ -115,12 +136,13 @@ void main() {
 
     final histogram = await parseHistogramData(histFile, 'multi_series');
 
-    expect(histogram.series, hasLength(3));
+    expect(histogram.series, hasLength(4));
     expect(histogram.title, equals('multi_series'));
 
     final series1 = histogram.series[0];
     final series2 = histogram.series[1];
     final series3 = histogram.series[2];
+    final series4 = histogram.series[3];
 
     expect(series1.title, equals(''));
     expect(
@@ -190,5 +212,66 @@ void main() {
               percentileInverse: 2.98,
               totalCount: 7),
         ]));
+
+    expect(series4.title, equals('Final Series'));
+    expect(
+        series4.data,
+        equals(const [
+          HistogramData(
+              value: 4, percentile: 0.5, percentileInverse: 0.4, totalCount: 1),
+        ]));
+    expect(
+        series4.stats,
+        equals(const HistogramStatistics(
+            mean: 0,
+            max: 0,
+            stdDev: 0,
+            totalCount: 0,
+            buckets: 0,
+            subBuckets: 0)));
+  });
+
+  test('Can parse real world example', () async {
+    final file =
+        const LocalFileSystem().file(path.join('test', 'data', '12Krps.txt'));
+    final histogram = await parseHistogramData(file, 'Data');
+    expect(histogram.title, equals('Data'));
+    expect(histogram.series.length, equals(1));
+    //        0.189     0.000000            1         1.00
+    expect(
+        histogram.series[0].data.first,
+        equals(const HistogramData(
+            value: 0.189,
+            percentile: 0.0,
+            percentileInverse: 1.0,
+            totalCount: 1)));
+    expect(
+        histogram.series[0].data.last,
+        equals(const HistogramData(
+            value: 64.767,
+            percentile: 1.0,
+            percentileInverse: double.infinity,
+            totalCount: 3477000)));
+    expect(
+        histogram.series[0].stats,
+        equals(const HistogramStatistics(
+            mean: 4.881,
+            max: 64.736,
+            stdDev: 1.777,
+            totalCount: 3477000,
+            buckets: 27,
+            subBuckets: 2048)));
+  });
+
+  test('Cannot parse binary data', () async {
+    final file =
+        const LocalFileSystem().file(path.join('docs', 'open_file.png'));
+    final histogram = parseHistogramData(file, 'Data');
+    expect(
+        histogram,
+        throwsA(isA<HistogramParseException>().having(
+            (e) => e.message,
+            'message',
+            equals('Input format error: content is not valid unicode'))));
   });
 }
